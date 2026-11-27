@@ -1,0 +1,14 @@
+# Generated audits are private; keep them outside this source tree.
+.DS_Store
+__pycache__/
+*.py[cod]
+.env
+.env.*
+reports/
+SecurityReports/
+private/
+**/report.json
+**/manifest.json
+**/target.json
+**/report.html
+!mac-security-audit/assets/report.html
