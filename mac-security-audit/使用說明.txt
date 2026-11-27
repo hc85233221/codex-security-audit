@@ -1,0 +1,113 @@
+電腦資安健檢 · Mac / Windows · v3.0.0
+
+分享包只含技能程式、離線報告介面與說明，不含建立者的電腦報告。
+保留 mac-security-audit 名稱以相容原本的呼叫；實際支援 Mac / Windows 分流。
+
+【安裝給 Codex 使用】
+1. 解壓縮分享 ZIP。
+2. 將整個 mac-security-audit 資料夾複製到自己的 skills 資料夾：
+   Mac：~/.codex/skills/
+   Windows：%USERPROFILE%\.codex\skills\
+   同名資料夾已存在時，先另存備份並確認是否有自行修改的內容。
+3. 開新聊天，輸入：
+   「請使用 $mac-security-audit 唯讀健檢我的電腦，產生含圖表與白話解釋的報告。
+   不修改設定、不讀密碼。如果需要額外權限或資料，先告訴我原因並詢問。」
+4. 完成後雙擊 report.html，瀏覽器即可離線查看。頂端可列印／存成 PDF 或下載 JSON。
+
+僅上傳一般網頁聊天，不會讓 AI 自動取得本機權限。
+需要有本機檔案／終端機能力的環境，以及 Python 3.9 以上。
+Windows 另外使用內建 Windows PowerShell 5.1 與系統 API；不變更執行原則、不自動提權。
+缺少必要工具時，助理會說明所需項目與替代方法，不會偷偷安裝。
+
+【報告內容】
+系統防護、磁碟加密、備份、更新、Wi-Fi、藍牙、程式、電腦腳本、背景程序／服務、開機項目、排程、AI skills、Cookie 中繼資料、擴充與近期檔案線索。
+兩個平台覆蓋範圍不同；不可把 Mac 結果套用到 Windows。
+圖表計算本次檢查項目與可讀資料，不提供可能誤導的安全總分。
+結果分為目前符合、需改善、待確認與資訊不足，附證據、改善方式及名詞解釋。
+先看短摘要；需要時再展開證據與限制。專有名詞滑鼠移入即可看解釋，鍵盤聚焦或手機點按也能查看，不另設名詞章節。
+靜態命中是待複核線索，不是已確認病毒；未檢查也不是沒有問題。
+新版採深色科技介面，先看優先行動與檢查範圍；證據與限制按需展開，列印仍保留完整內容。
+Mac 新增裝置管理、系統代理、訪客登入、自動登入與防火牆隱藏模式。公司管理或代理本身不代表有威脅。
+
+【被動檢測：你指定，才檢查】
+在面板選「被動檢測」：
+1. 連結：貼上完整網址，可立即做離線結構初查，不開啟網站。
+2. 網站：建立檢查需求，複製給 Codex 後才會執行公開網站首頁的 DNS、TLS、HEAD 檢查。
+3. 資料夾：填入要查的資料夾位置，複製需求給 Codex；預設只查檔名與中繼資料。
+
+也可直接在 Codex 說：
+「請用 $mac-security-audit，離線檢查這個連結：<完整網址>。」
+「請唯讀連線檢查這個公開網站首頁：<網址>，不登入、不執行網頁程式。」
+「請檢查這個資料夾的檔名與權限：<資料夾>，不執行、不刪除檔案。」
+
+面板建立需求不等於已經掃描；Codex 實際執行後會產生新的 HTML 報告。
+檢查不會將目標或檔案送去第三方掃毒服務。含登入資料、參數或片段的網址不直接送出連線。
+網站只查公開首頁的連線與標頭，不跟隨轉址、不讀頁面內容；不是全站弱點或詐騙鑑定。
+資料夾有深度與數量上限；腳本文字另需明確同意。壓縮檔不解開、執行檔不啟動、私人文件與憑證不讀。
+不因未發現線索宣稱安全；完整範圍見 references/targeted-checks.md。
+
+【常用程式與技能圖表】
+已安裝、目前執行中、最近開啟日期、期間使用次數分開呈現。
+Mac 可取得部分程式的最近開啟日期，但這不是使用次數或使用時數；沒有日期也不代表沒用過。
+沒有可靠事件就顯示未知，不拿檔案時間或快取存在推估，不自動建議刪除。
+沒有使用次數時，上方卡片仍直接展示已取得的技能包數量、來源分布與程式最近開啟日期；沒有日期時顯示程式盤點。缺少使用統計不等於整項沒有檢查。
+可匯入使用者明確提供的聚合 JSON（名稱、次數、來源、期間），格式見 references/usage.md。
+匯入統計仍標示「未核驗原始事件」。不要提供原始聊天、瀏覽紀錄或私人文件。
+Codex 使用者也可請助理先查本機既有的技能使用線索，不必自行製作統計檔。助理會先說明範圍並取得授權，預設建議近 30 天，只彙總名稱、次數與日期，不分析聊天內文或開始追蹤。
+實際技能事件、明確指定技能、讀取技能說明會分開標示；本機 AI 的回憶不能當成完整次數。需要新對話時可由使用者指定；流程見 references/codex-usage.md。
+
+【需要你協助時】
+報告列出缺少的資訊、權限原因與手動替代方式。助理先完成可做的唯讀項目，再詢問具體受阻項目。
+通常可在系統設定手動查看並回覆開啟／關閉／不確定，不必一律給完全取用磁碟或管理員權限。
+人不在或沒有回答時，保留待確認，不把沉默當成授權。
+可以選擇先補本機、帳號稍後再查。延後項目會保留未檢查，不會自動登入外部帳號。
+不要求密碼、驗證碼、API 金鑰、復原金鑰或 Cookie 內容。
+
+【隱私】
+受檢來源保持唯讀；只建立新報告。沒有刪除、停用、清 Cookie、掃描附近網路或建立持續監控。連線網站需使用者指定並授權，網站仍可能記錄這次請求。
+不讀 Wi-Fi 密碼，也不保留 SSID、BSSID／MAC 位址。裝置名稱、程式名稱與本機路徑仍可能涉及個資。
+HTML 沒有外部資源、追蹤碼或上傳功能。當你讓 AI 閱讀摘要時，所用 AI 服務仍會依其環境處理那些內容。
+Mac 報告目錄 0700、檔案 0600；Windows 報告使用目前使用者與 SYSTEM 的受保護 ACL，需本機固定磁碟支援 ACL。
+系統管理員、同步軟體或備份工具仍可能取得資料；請選自己的本機私人資料夾。
+分享 skill ZIP 即可。不要把自己的 report.html、report.json 或整個私人報告資料夾一起轉傳。
+
+【技術使用方式】
+Mac：
+python3 -B "技能資料夾/scripts/run_audit.py" --output-dir "新的本機報告資料夾"
+
+Windows PowerShell：
+py -3 -B "技能資料夾\scripts\run_audit.py" --output-dir "$env:USERPROFILE\SecurityReports\NewReport"
+
+每次指定新的報告資料夾，不覆蓋舊報告。
+--check-updates：Mac 查詢 Apple 可用更新；Windows 仍只取已安裝更新紀錄。
+--include-plugin-cache：納入插件快取（存在不等於啟用）。
+--script-root PATH：限定已授權的腳本資料夾，可重複；指定後取代預設範圍。
+  預設 Scripts、.local/bin、Downloads，有限深度與檔案量，不掃描整顆磁碟。
+--usage-file PATH：匯入上述聚合統計。
+--modules system,browser,skills,scripts：只做指定模組。
+  Mac 預設另有 connectivity、background、supplemental、recent_apps、exposure。
+  supplemental 補查備份狀態、程式 ACL 與缺漏名稱；recent_apps 查最近開啟日期。
+  exposure 補查管理、代理與登入設定，僅適用 Mac。
+  Windows 的無線／背景項目包含在 system；上述兩個補查模組僅適用 Mac。
+--help：其他範圍與時間參數。
+
+只補已有報告，不重掃整台電腦：
+python3 -B "技能資料夾/scripts/enrich_report.py" --base-report "舊報告/report.json" --supplement "補查資料/supplemental.json" --supplement "補查資料/manual_ui.json" --output-dir "新的補查報告資料夾"
+--supplement 可重複，接受 supplemental、recent_apps、manual_ui、codex_usage、exposure；每類一次一份，必須有實際來源與觀察時間。codex_usage 記錄來源補查與限制，不會把無紀錄轉成零次或覆蓋已有的可靠統計。
+這個指令合併已收集的資料，不會自行補看系統畫面。人工補查資料由助理根據實際觀察整理，不用猜測填值。
+原報告保持不變，新報告分開顯示原檢查與補查時間，避免把舊證據當成即時結果。
+
+指定目標的技術入口：
+python3 -B "技能資料夾/scripts/inspect_target.py" --kind link --target "<網址>" --output-dir "<新報告目錄>"
+python3 -B "技能資料夾/scripts/inspect_target.py" --kind website --target "<公開網址>" --allow-network --output-dir "<新報告目錄>"
+python3 -B "技能資料夾/scripts/inspect_target.py" --kind folder --target "<資料夾>" --output-dir "<新報告目錄>"
+Windows 將 python3 -B 改為 py -3 -B。特殊字元輸入應交由 Codex 用正確參數方式執行，不直接拼接 shell 指令。
+
+看介面示範、不掃描電腦：
+python3 -B "技能資料夾/scripts/demo_report.py" --output-dir "新的示範資料夾"
+Windows 將 python3 -B 改為 py -3 -B。
+示範所有數字皆為假資料，有醒目示範標籤。
+
+【驗證與限制】
+詳見 references/validation.md。Mac 有實機驗證；Windows 程式與模擬測試已完成，但目前沒有 Windows 實機驗證，不能宣稱已通過 Windows 實測。
+短暫流量與有限紀錄不能排除歷史外洩；本工具不取代防毒、專業事件調查或備份還原測試。
