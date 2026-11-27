@@ -1,4 +1,4 @@
-電腦資安健檢 · Mac / Windows · v3.0.0
+電腦資安健檢 · Mac / Windows · v3.1.0
 
 分享包只含技能程式、離線報告介面與說明，不含建立者的電腦報告。
 保留 mac-security-audit 名稱以相容原本的呼叫；實際支援 Mac / Windows 分流。
@@ -18,6 +18,26 @@
 需要有本機檔案／終端機能力的環境，以及 Python 3.9 以上。
 Windows 另外使用內建 Windows PowerShell 5.1 與系統 API；不變更執行原則、不自動提權。
 缺少必要工具時，助理會說明所需項目與替代方法，不會偷偷安裝。
+
+【版本與更新】
+安裝是本機副本，不會因 GitHub 上傳新版就自動更新。沒有背景更新或監控。
+要查版本：對 Codex 說「使用 $mac-security-audit 檢查是否有新版」。
+要更新（包含舊版使用者）：
+「請從 https://github.com/hc85233221/codex-security-audit 檢查並更新我的 mac-security-audit Skill。
+先核對目前版本與本機修改，保留舊版備份；有自行修改的內容時先詢問，不要直接覆蓋。」
+只查版本不替換檔案；來源校驗碼只能驗證下載一致，不能證明程式絕對安全。
+詳見 references/updating.md。更新後在下一則訊息使用。
+Windows 可查公開新版；helper 不支援候選準備與本機比對，改用官方安裝工具下載到新資料夾，先保留舊版。
+
+【AI 設定與近期生成候選檔案】
+檢查明列 AI 設定及近期下載或使用者指定輸出資料夾，預設近 14 天。
+檢視程式或工作流的權限、下載執行、資料傳送與提示注入線索；只保留規則與位置，不保存原文或秘密值。
+修改時間不能證明是 AI 生成；來源不明會標示待確認。
+不讀聊天、指令歷史、私人文件或憑證。模型權重、圖片、壓縮檔等內容不執行或載入；未查內容會明列。
+Windows 新增模組採保守的中繼資料檢查；沒有將模擬驗證當成實機通過。
+其他輸出位置由使用者指定，或授權助理只用中繼資料定位近期輸出。
+--ai-root PATH 可重複，指定後取代預設 Downloads；--days 控制近期範圍。
+單獨補查：--modules ai_artifacts。詳見 references/ai-artifacts.md。
 
 【報告內容】
 系統防護、磁碟加密、備份、更新、Wi-Fi、藍牙、程式、電腦腳本、背景程序／服務、開機項目、排程、AI skills、Cookie 中繼資料、擴充與近期檔案線索。
@@ -93,7 +113,7 @@ py -3 -B "技能資料夾\scripts\run_audit.py" --output-dir "$env:USERPROFILE\S
 
 只補已有報告，不重掃整台電腦：
 python3 -B "技能資料夾/scripts/enrich_report.py" --base-report "舊報告/report.json" --supplement "補查資料/supplemental.json" --supplement "補查資料/manual_ui.json" --output-dir "新的補查報告資料夾"
---supplement 可重複，接受 supplemental、recent_apps、manual_ui、codex_usage、exposure；每類一次一份，必須有實際來源與觀察時間。codex_usage 記錄來源補查與限制，不會把無紀錄轉成零次或覆蓋已有的可靠統計。
+--supplement 可重複，接受 supplemental、recent_apps、manual_ui、codex_usage、exposure、ai_artifacts；每類一次一份，必須有實際來源與觀察時間。codex_usage 記錄來源補查與限制，不會把無紀錄轉成零次或覆蓋已有的可靠統計。
 這個指令合併已收集的資料，不會自行補看系統畫面。人工補查資料由助理根據實際觀察整理，不用猜測填值。
 原報告保持不變，新報告分開顯示原檢查與補查時間，避免把舊證據當成即時結果。
 

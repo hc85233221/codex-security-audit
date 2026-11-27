@@ -1,6 +1,6 @@
 ---
 name: mac-security-audit
-description: 唯讀健檢 Mac 或 Windows，或依使用者指定檢查連結、公開網站及資料夾的風險線索，產生附圖表、白話提示及證據的離線報告。不代替防毒鑑識或持續監控。
+description: 唯讀健檢 Mac 或 Windows、AI 設定與近期生成候選檔案，或檢查使用者指定的連結、公開網站及資料夾，產生繁體中文離線風險報告；也可依要求檢查及準備此 Skill 的版本更新。
 ---
 
 # 電腦資安健檢 · Mac / Windows
@@ -9,12 +9,15 @@ description: 唯讀健檢 Mac 或 Windows，或依使用者指定檢查連結、
 
 ## 先辨識任務
 
+- 使用者要檢查或更新這個 Skill：讀 [版本更新](references/updating.md)，只查官方發布來源。安裝是版本快照，GitHub 更新不會自動改動朋友電腦；不得自行建立更新排程。明確要求更新時先準備候選版本、核對舊版與修改、保留備份。這是 Skill 本身的更新，不是受檢系統設定的修復。
+- 使用者要查 AI 檔案或生成內容：讀 [AI 設定與近期檔案](references/ai-artifacts.md)，先確認近期天數與輸出資料夾，使用 `ai_artifacts` 模組。不得把所有近期檔案當成 AI 生成。
 - 使用者要健檢電腦：執行下方系統健檢流程。
 - 使用者主動指定連結、網站或資料夾：只做該目標的「被動檢測」，先讀 [指定目標檢查](references/targeted-checks.md)。不要順帶掃描整台電腦或其他網站。
 - 被動指「使用者提出才檢查」，不表示網站檢查完全沒有連線；每次明確說明離線網址分析、實際網站連線與本機檔案讀取的區別。
 
 ## 執行邊界
 
+- 下列唯讀限制適用於健檢來源。使用者明確要求更新本 Skill 時，可以依版本更新流程建立暫存、保留舊版備份並替換已核對的 Skill 程式；不得順帶更新其他程式或修改受檢設定。
 - 先簡述範圍。一般健檢可直接執行；使用者離席時繼續已授權的唯讀項目，把需要決策的項目留在報告。
 - 唯一預期寫入是新建的本機報告與測試產物。Mac 報告目錄 0700、檔案 0600；Windows 在支援 ACL 的本機固定磁碟建立僅目前使用者與 SYSTEM 可存取的報告目錄，無法設定就停止收集。不得刪除、隔離、安裝、更新、清 Cookie、停用技能、變更受檢來源權限、停止使用者程式或建立監控排程。系統管理者及備份軟體可能仍有存取能力。
 - 不讀密碼、金鑰、復原碼、Cookie 值、登入憑證、Keychain、shell history、聊天、瀏覽歷史或任意私人文件。敏感檔案只檢查存在與檔案權限。不要顯示完整環境變數、完整程序參數或 launchd EnvironmentVariables。
@@ -52,6 +55,16 @@ Mac 預設另執行 `supplemental`（備份狀態、程式頂層 ACL、缺漏程
 
 Mac 的 `exposure` 補查裝置管理、代理、訪客、自動登入與防火牆隱藏模式；來源與限制見 [管理與登入補查](references/exposure.md)。公司管理或代理啟用不是入侵證據；缺少設定值不能直接當成關閉。Windows 不套用此模組。
 
+`ai_artifacts` 補查限定的 AI 設定與近期檔案。預設生成候選範圍為 Downloads、近 14 天；`--ai-root PATH` 可重複，指定後取代預設範圍，`--days` 控制近期期間。其他輸出位置先詢問或取得授權後，只用檔案中繼資料定位，不讀聊天紀錄。AI 設定只看明列來源；生成候選只讀允許的程式與工作流文字。模型、圖片、私人文件與壓縮檔不執行或載入，略過及不支援內容必須列出。
+
+只補 AI 檔案的例子：
+
+```sh
+python3 -B "<skill-directory>/scripts/run_audit.py" --modules ai_artifacts --days 14 --ai-root "<authorized-output-folder>" --output-dir "<new-local-report-directory>"
+```
+
+近期修改、output 資料夾與檔名只能找到候選，不證明 AI 來源。不確定生成位置時，先檢查 Downloads 與已授權且可確認的輸出位置，保留「來源待確認」。不得因沒有規則命中宣稱安全；輸出只保留規則、行號與理由，不保存秘密值、提示詞正文或原始程式片段。
+
 `--usage-file PATH` 匯入使用者明確提供的聚合次數，格式與限制見 [使用頻率](references/usage.md)。沒有可靠事件就維持 unknown；不讀聊天、shell 或瀏覽歷史，不把背景執行、檔案時間或快取存在換算使用率。統計來源及期間必須顯示，使用者提供的聚合資料尚未核驗原始事件。
 
 使用者希望由本機 AI 補常用技能資訊時，先讀 [Codex 使用線索](references/codex-usage.md)：確認授權期間後，優先查 Codex 既有結構化技能事件或明確指定紀錄，只輸出聚合結果。不要直接推給使用者製作統計檔；也不要把 AI 回憶、提及或讀取說明當成真正的呼叫次數。
@@ -66,7 +79,7 @@ Mac 的 `exposure` 補查裝置管理、代理、訪客、自動登入與防火�
 python3 -B "<skill-directory>/scripts/enrich_report.py" --base-report "<old-report>/report.json" --supplement "<new-evidence>/supplemental.json" --supplement "<new-evidence>/manual_ui.json" --output-dir "<new-local-report-directory>"
 ```
 
-`--supplement` 可重複，接受附觀察時間的 `supplemental`、`recent_apps`、`manual_ui`、`codex_usage` 或 `exposure` 資料；同類別一次只給一份。人工資料必須來自實際觀察，不能用推測補值。新報告保留原觀察時間，另標補查時間；同一個備份／ACL 問題只補證據、不重複計算風險。帳號若由使用者選擇延後，保持未檢查並記錄範圍選擇。
+`--supplement` 可重複，接受附觀察時間的 `supplemental`、`recent_apps`、`manual_ui`、`codex_usage`、`exposure` 或 `ai_artifacts` 資料；同類別一次只給一份。人工資料必須來自實際觀察，不能用推測補值。新報告保留原觀察時間，另標補查時間；同一個備份／ACL 問題只補證據、不重複計算風險。帳號若由使用者選擇延後，保持未檢查並記錄範圍選擇。
 
 ### 指定目標檢查
 
