@@ -40,6 +40,9 @@ GLOSSARY = [
     ('head', 'HEAD', '只請求網站回應資訊，不讀取網頁正文。網站仍可能記錄此次請求；本檢查不跟隨轉址。'),
     ('idn', '國際化網域', '可包含不同語言字元的網站名稱。合法名稱也可能看起來很相似，需要核對實際網域。'),
     ('metadata', '中繼資料', '檔名、類型、大小、時間或權限等資料，與文件內文不同；只查這些無法排除檔案中的惡意內容。'),
+    ('mcp', 'MCP', '讓 AI 使用外部工具或資料來源的連接方式。設定中有工具不代表已啟用；需要核對其來源與可存取範圍。'),
+    ('deserialization', '模型反序列化', '程式將儲存的模型或物件載入記憶體；某些格式可在載入時執行程式。本檢查不載入模型，只以類型提醒核對來源。'),
+    ('ai_provenance', '生成來源', '檔案是否由 AI 生成，需有可靠來源紀錄或使用者確認。檔名、資料夾或近期修改時間都不能單獨證明。'),
 ]
 
 def check(id, category, title, status, summary, impact='', actions=None, evidence=None,
@@ -185,7 +188,7 @@ def skill_checks(data, inventory):
 
 def build_report(modules, manifest, usage=None, demo=False):
     now = dt.datetime.now().astimezone().isoformat()
-    inventory = {key:[] for key in ('skills','apps','devices','extensions','scripts','background')}; checks=[]; metrics={}; scope=[]
+    inventory = {key:[] for key in ('skills','apps','devices','extensions','scripts','background','ai_artifacts')}; checks=[]; metrics={}; scope=[]
     results = {x['module']:x for x in manifest.get('modules',[])}
     for name in ('system','connectivity','browser','skills','scripts','background'):
         if name in ('connectivity','background') and manifest.get('platform')=='Windows':
@@ -238,7 +241,7 @@ def build_report(modules, manifest, usage=None, demo=False):
         requests.append({'id':'blocked','title':'尚未取得的檢查資料','reason':'、'.join(c['title'] for c in blocked),
                          'request':'若要補查，請先選擇項目；助理會說明具體來源與最小必要權限，再詢問是否繼續。',
                          'alternatives':['先在系統設定手動確認並回覆開啟／關閉／不確定。','本工具不自動提升管理員權限、不繞過企業政策；未回覆就保留缺口。']})
-    report = {'schema_version':'2.0','meta':{'title':'電腦資安健檢','version':'3.0.0','platform':'macOS' if manifest.get('platform')=='Darwin' else manifest.get('platform','macOS'),
+    report = {'schema_version':'2.0','meta':{'title':'電腦資安健檢','version':'3.1.0','platform':'macOS' if manifest.get('platform')=='Darwin' else manifest.get('platform','macOS'),
             'observed_at':manifest.get('generated_at',now),'generated_at':now,'demo':demo,
             'scope_note':'一次性唯讀健檢。已收集不等於安全認證；沒有建立持續監控。報告含私人裝置資訊，請勿混入分享包。'},
             'checks':checks,'inventories':inventory,'usage':usage,'metrics':metrics,

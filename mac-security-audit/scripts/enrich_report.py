@@ -28,7 +28,7 @@ def main():
             module=validate_module(read_json_bounded(path)); name=module['module']
             if name in seen: raise ValueError('Duplicate supplement module.')
             seen.add(name); modules[name]=module
-        allowed_modules=('system','browser','skills','scripts','connectivity','background','supplemental','recent_apps','manual_ui','codex_usage','exposure')
+        allowed_modules=('system','browser','skills','scripts','connectivity','background','supplemental','recent_apps','manual_ui','codex_usage','exposure','ai_artifacts')
         if any(name not in allowed_modules for name in modules):
             raise ValueError('Unsupported report module name.')
         scripts=Path(__file__).resolve().parent
@@ -38,21 +38,23 @@ def main():
         except ValueError: pass
         else: raise ValueError('Output must be outside the shared skill.')
         manifest['report_storage']=private_directory(out)
-        manifest['version']='3.0.0'
+        manifest['version']='3.1.0'
         manifest['base_observed_at']=original['meta'].get('observed_at')
         manifest['generated_at']=original['meta'].get('observed_at',manifest.get('generated_at'))
         manifest['rendered_at']=dt.datetime.now().astimezone().isoformat()
         manifest['base_report_sha256']=base_digest
+        template_bytes=(scripts.parent/'assets/report.html').read_bytes()
+        manifest['template_sha256']=hashlib.sha256(template_bytes).hexdigest()
         manifest['renderer_sha256']={name:hashlib.sha256((scripts/name).read_bytes()).hexdigest()
                                     for name in ('report_model.py','report_enrichment.py','enrich_report.py')}
         manifest['supplements']=[{'module':name,'observed_at':modules[name]['observed_at'],'coverage_status':modules[name].get('coverage_status','bounded')}
-                                 for name in ('supplemental','recent_apps','manual_ui','codex_usage','exposure') if name in modules]
+                                 for name in ('supplemental','recent_apps','manual_ui','codex_usage','exposure','ai_artifacts') if name in modules]
         report=build_report(modules,manifest,original.get('usage'),demo=bool(original['meta'].get('demo')))
         write_new(out/'manifest.json',manifest); write_new(out/'report.json',report)
         for name,data in modules.items():
             # Module names were allowlisted before any report output was created.
             write_new(out/(name+'.json'),data)
-        write_new(out/'report.html',render_html(report,(scripts.parent/'assets/report.html').read_text(encoding='utf-8')),False)
+        write_new(out/'report.html',render_html(report,template_bytes.decode('utf-8')),False)
         write_new(out/'補查摘要.txt','原檢查時間：'+str(report['meta'].get('observed_at'))+'\n補查時間：'+str(report['meta'].get('supplemented_at','無新增資料'))+
                   '\n此報告保留原檢查來源；只加入有時間與來源的本機補查。沒有重掃全部來源或修改受檢設定。',False)
     except (OSError,ValueError,TypeError,KeyError,RecursionError):

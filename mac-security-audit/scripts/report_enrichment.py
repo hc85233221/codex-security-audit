@@ -36,7 +36,7 @@ def timestamp(value):
 
 
 def validate_module(data):
-    if not isinstance(data,dict) or data.get('module') not in ('manual_ui','supplemental','recent_apps','codex_usage','exposure'):
+    if not isinstance(data,dict) or data.get('module') not in ('manual_ui','supplemental','recent_apps','codex_usage','exposure','ai_artifacts'):
         raise ValueError('Unsupported supplement module.')
     timestamp(data.get('observed_at'))
     checks=data.get('checks',[])
@@ -62,6 +62,16 @@ def validate_module(data):
             raise ValueError('Codex source review may only document unknown skill frequency.')
         if data['module']=='exposure' and not item['id'].startswith('exposure.'):
             raise ValueError('Exposure checks cannot replace unrelated findings.')
+        if data['module']=='ai_artifacts' and (not item['id'].startswith('ai_artifacts.') or
+                item['category'] not in ('skills','files') or item['status']=='pass'):
+            raise ValueError('AI file triage cannot replace unrelated checks or certify safety.')
+    if data['module']=='ai_artifacts':
+        inventories=data.get('inventories',{})
+        if not isinstance(inventories,dict) or set(inventories)-{'ai_artifacts'}:
+            raise ValueError('AI file triage cannot replace unrelated inventories.')
+        rows=inventories.get('ai_artifacts',[])
+        if not isinstance(rows,list) or len(rows)>2000 or any(not isinstance(row,dict) for row in rows):
+            raise ValueError('Invalid AI file inventory.')
     if data['module']=='codex_usage':
         if data.get('inventories'): raise ValueError('Codex source review cannot supply device inventory.')
         review=data.get('usage_review',{})
@@ -88,7 +98,7 @@ def enrich_report(report, modules):
     checks=report['checks']; by_id={c['id']:c for c in checks}; dates=[]; manual=None
     merged={'supplemental.backup_status':'mac.backup','supplemental.app_acl':'mac.app_permissions',
             'manual.login_items':'mac.startup'}
-    for name in ('supplemental','recent_apps','manual_ui','codex_usage','exposure'):
+    for name in ('supplemental','recent_apps','manual_ui','codex_usage','exposure','ai_artifacts'):
         data=modules.get(name)
         if data is not None and not isinstance(data,dict): raise ValueError('Invalid supplement module.')
         execution=next((x for x in report.get('manifest',{}).get('modules',[]) if x.get('module')==name),None)
@@ -96,13 +106,22 @@ def enrich_report(report, modules):
         failed_data=data and (data.get('status') in ('failed','unsupported','timeout','unavailable') or data.get('coverage_status') in ('not_checked','failed','unavailable'))
         if failed_data or (execution and execution.get('status')!='completed' and not explicitly_added) or (execution and not data):
             report['scope'].append({'module':name,'status':'unavailable','detail':'補查模組未完成，不能當成沒有問題。'})
-            checks.append({'id':'module.'+name,'category':'apps','title':'本機補查未完成','status':'unknown','severity':'info',
+            checks.append({'id':'module.'+name,'category':'files' if name=='ai_artifacts' else 'apps','title':'AI 檔案檢查未完成' if name=='ai_artifacts' else '本機補查未完成','status':'unknown','severity':'info',
                            'summary':'模組 '+name+' 未取得可判讀結果。','actions':[],'evidence':[],'limitations':[],'terms':[]})
             continue
-        if not data: continue
-        validate_module(data); dates.append(timestamp(data['observed_at']))
+        if not data:
+            if name=='ai_artifacts':
+                report['scope'].append({'module':name,'status':'not_selected','detail':'本次未執行 AI 設定與近期檔案檢查。'})
+                checks.append({'id':'module.ai_artifacts','category':'files','title':'AI 設定與近期檔案','status':'not_checked','severity':'info',
+                               'summary':'本次尚未取得 AI 檔案檢查資料。','actions':['需要時指定近期生成檔案的資料夾，再做唯讀檢查。'],
+                               'evidence':[],'limitations':['沒有遍歷整顆磁碟或讀取聊天內容。'],'terms':['ai_provenance']})
+            continue
+        validate_module(data)
+        if data['module'] != name:
+            raise ValueError('Supplement module name does not match its source.')
+        dates.append(timestamp(data['observed_at']))
         if name=='manual_ui': manual=data
-        report['scope'].append({'module':{'supplemental':'備份與程式補查','recent_apps':'程式最近開啟','manual_ui':'系統設定補查','codex_usage':'Codex 使用來源補查','exposure':'管理、代理與登入設定'}[name],
+        report['scope'].append({'module':{'supplemental':'備份與程式補查','recent_apps':'程式最近開啟','manual_ui':'系統設定補查','codex_usage':'Codex 使用來源補查','exposure':'管理、代理與登入設定','ai_artifacts':'AI 設定與近期檔案'}[name],
                                 'status':'partial' if data.get('coverage_status')=='partial' else 'completed',
                                 'detail':'觀察時間：'+data['observed_at']+'；'+str(data.get('coverage_status','bounded'))})
         for original in data.get('checks',[]):
@@ -128,6 +147,10 @@ def enrich_report(report, modules):
                 checks[checks.index(target)]=item
             else: checks.append(item)
             by_id[item['id']]=item
+        if name=='ai_artifacts':
+            # A supplement is a newly observed bounded scope, not an additive
+            # lifetime inventory; keep no stale rows or duplicated file counts.
+            report.setdefault('inventories',{})['ai_artifacts']=copy.deepcopy(data.get('inventories',{}).get('ai_artifacts',[]))
         if name=='codex_usage':
             usage=report.setdefault('usage',{}).setdefault('skills',{'status':'unknown','items':[]})
             if usage.get('status')!='available':
@@ -191,6 +214,6 @@ def enrich_report(report, modules):
             if item['status']=='unknown': item.setdefault('short_summary',short[item['id']])
         elif item['id'] in short and item['status'] not in ('unknown','not_checked'):
             item.setdefault('short_summary',short[item['id']])
-    report['meta']['version']='3.0.0'
+    report['meta']['version']='3.1.0'
     report['meta']['scope_note']='唯讀檢查，未修改設定。報告留在本機。'
     return report

@@ -42,6 +42,15 @@ def demo_model():
         'skills':{'summary':{'skill_packages':4,'files_scanned':24,'review_signals':3},'inventory':[
             {'name_from_directory':n,'skill_directory':'示範來源','review_signals':count} for n,count in [('document-helper',0),('spreadsheet-helper',1),('image-helper',0),('legacy-helper',2)]],
             'findings':[{'skill_directory':'legacy-helper','file':'scripts/example.py','line':12,'rule':'destructive_operation','status':'review_signal','context_tags':['example'],'source_excerpt':'omitted'}]},
+        'ai_artifacts':{'module':'ai_artifacts','observed_at':now.isoformat(),'coverage_status':'partial',
+            'checks':[check('ai_artifacts.config','skills','AI 設定與工具連接','unknown','示範：僅取得設定檔中繼資料，未判讀內容。',
+                            actions=['另以已授權的設定來源確認 MCP 工具及權限。'],terms=['mcp']),
+                      check('ai_artifacts.generated','files','近期檔案與生成線索','review','示範：一個模型格式需核對來源，沒有載入模型。',
+                            actions=['檢查來源與實際用途；副檔名不是惡意判決。'],terms=['deserialization','ai_provenance'])],
+            'inventories':{'ai_artifacts':[
+                {'name':'mcp.json','path':'示範設定目錄/mcp.json','source':'人工示範','kind':'ai_config','group':'config','scan_status':'metadata_only_platform','content_read':False,'signal_count':0,'provenance':'known_ai_config'},
+                {'name':'workflow.json','path':'示範生成目錄/workflow.json','source':'人工示範','kind':'workflow','group':'generated','scan_status':'metadata_only_platform','content_read':False,'signal_count':0,'provenance':'unknown'},
+                {'name':'example-model.pkl','path':'示範模型目錄/example-model.pkl','source':'人工示範','kind':'model_metadata','group':'generated','scan_status':'metadata_only','content_read':False,'signal_count':1,'provenance':'unknown'}]}},
         'browser':{'profiles':[{'browser':'示範瀏覽器','profile':'示範設定檔','cookies':{'status':'read_only_ok','total':1200,'expired_rows':140,'expires_more_than_365_days_from_now':90},
                                'extensions':[{'name_untrusted':'示範擴充功能','requested_sensitive_permissions':['cookies'],'review_flags':['broad_or_sensitive_requested_permissions']}]}],
                    'coverage_totals':{'discovered_profiles':2},'coverage_status':'partial'}}

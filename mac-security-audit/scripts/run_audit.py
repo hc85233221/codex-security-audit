@@ -104,6 +104,10 @@ def make_summary(directory, results):
                 lines.append('  偵測到讀取錯誤或未回報profile，覆蓋不完整。')
             lines.append('  擴充安裝條目 %s；可能包含多profile與殘留，啟用狀態須另外核對。' %
                          sum(len(p.get('extensions', [])) for p in profiles))
+        elif name == 'ai_artifacts':
+            items = data.get('inventories', {}).get('ai_artifacts', [])
+            lines.append('  AI 設定與近期檔案 %s 筆；只涵蓋指定範圍，生成來源未知時保留未知。' % len(items))
+            lines.append('  未執行、載入模型或上傳檔案；完整讀取限制與線索見 AI 檔案檢查。')
         elif name == 'system' and 'checks' not in data:
             system = data.get('system', {})
             for key in ['macos', 'filevault', 'firewall', 'gatekeeper', 'sip']:
@@ -130,15 +134,17 @@ def main():
     parser.add_argument('--include-plugin-cache', action='store_true')
     parser.add_argument('--skill-root', type=Path, action='append')
     parser.add_argument('--script-root', type=Path, action='append', help='Explicitly authorized standalone script directories')
-    parser.add_argument('--modules', help='Subset: system,browser,skills,scripts,connectivity,background,supplemental,recent_apps,exposure (last five Mac only)')
+    parser.add_argument('--ai-root', type=Path, action='append', help='Authorized recent-file directories; replaces Downloads default, does not prove AI origin')
+    parser.add_argument('--ai-exclude', type=Path, action='append', default=[], help='Skip a directory within the selected AI-file scope')
+    parser.add_argument('--modules', help='Subset: system,browser,skills,scripts,ai_artifacts,connectivity,background,supplemental,recent_apps,exposure (last five Mac only)')
     parser.add_argument('--usage-file', type=Path, help='Explicitly supplied aggregate counts; never raw chats/history')
     args = parser.parse_args()
     host = platform.system()
     if host not in ('Darwin','Windows'):
         parser.error('Only macOS and Windows are supported. No other OS is treated as covered.')
-    default = 'system,browser,skills,connectivity,scripts,background,supplemental,recent_apps,exposure' if host=='Darwin' else 'system,browser,skills,scripts'
+    default = 'system,browser,skills,connectivity,scripts,ai_artifacts,background,supplemental,recent_apps,exposure' if host=='Darwin' else 'system,browser,skills,scripts,ai_artifacts'
     selected = (args.modules or default).split(',')
-    allowed = ('system','browser','skills','connectivity','scripts','background','supplemental','recent_apps','exposure') if host=='Darwin' else ('system','browser','skills','scripts')
+    allowed = ('system','browser','skills','connectivity','scripts','ai_artifacts','background','supplemental','recent_apps','exposure') if host=='Darwin' else ('system','browser','skills','scripts','ai_artifacts')
     if not selected or len(set(selected)) != len(selected) or any(x not in allowed for x in selected):
         parser.error('Choose each supported module at most once; Windows connectivity is part of system.')
     try:
@@ -157,7 +163,8 @@ def main():
         roots.append(home / '.codex/plugins/cache')
     # Keep the report outside code being inspected and outside this distributed skill.
     script_roots = [r.expanduser().absolute() for r in (args.script_root or [home/'Scripts',home/'.local/bin',home/'Downloads'])]
-    for root in roots + script_roots + [scripts.parent]:
+    ai_roots = [r.expanduser().absolute() for r in (args.ai_root or [home/'Downloads'])]
+    for root in roots + script_roots + ai_roots + [scripts.parent]:
         try:
             out.resolve().relative_to(root.resolve())
         except ValueError:
@@ -172,7 +179,7 @@ def main():
         report = out / (name + '.json')
         collector = 'windows' if host=='Windows' and name=='system' else name
         argv = [sys.executable, '-B', str(scripts / ('inspect_' + collector + '.py')), '--output', str(report)]
-        if name in ('system', 'browser','connectivity','background','supplemental','recent_apps','exposure'):
+        if name in ('system', 'browser','connectivity','background','supplemental','recent_apps','exposure','ai_artifacts'):
             argv += ['--home', str(home)]
         if name == 'system':
             argv += ['--days', str(args.days), '--network-seconds', str(args.network_seconds)]
@@ -185,14 +192,22 @@ def main():
         elif name == 'scripts':
             for root in script_roots:
                 argv += ['--root',str(root)]
+        elif name == 'ai_artifacts':
+            argv += ['--days', str(args.days)]
+            for root in ai_roots:
+                argv += ['--root', str(root)]
+            for excluded in [scripts.parent, out] + args.ai_exclude:
+                argv += ['--exclude', str(excluded.expanduser().absolute())]
         jobs.append((name, argv, report))
     with ThreadPoolExecutor(max_workers=3) as executor:
         results = list(executor.map(execute_module, jobs))
+    template_bytes = (scripts.parent / 'assets/report.html').read_bytes()
     manifest = {
-        'version': '3.0.0', 'platform':host, 'generated_at': dt.datetime.now().astimezone().isoformat(),
+        'version': '3.1.0', 'platform':host, 'generated_at': dt.datetime.now().astimezone().isoformat(),
         'report_storage': storage_security,
         'modules': results, 'read_only_scope': True,
         'script_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(scripts.glob('*.py'))},
+        'template_sha256': hashlib.sha256(template_bytes).hexdigest(),
         'manual_checks': 'System Settings privacy grants; account security and restore tests need separate authorized review.',
         'limits': 'A completed collector is not a malware-free or no-exfiltration conclusion.'}
     write_new(out / 'manifest.json', manifest)
@@ -203,8 +218,7 @@ def main():
             modules[result['module']] = json.loads((out / result['report']).read_text(encoding='utf-8'))
     report = build_report(modules, manifest, usage=usage)
     write_new(out / 'report.json', report)
-    template = (scripts.parent / 'assets/report.html').read_text(encoding='utf-8')
-    write_new(out / 'report.html', render_html(report,template), is_json=False)
+    write_new(out / 'report.html', render_html(report,template_bytes.decode('utf-8')), is_json=False)
     print(json.dumps({'report_directory': str(out), 'modules': results}, ensure_ascii=False))
     return 0 if all(r['status'] == 'completed' for r in results) else 1
 
