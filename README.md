@@ -8,11 +8,11 @@
 
 ```text
 請使用 skill-installer 安裝這個 Skill：
-https://github.com/hc85233221/codex-security-audit/tree/v3.0.0/mac-security-audit
+https://github.com/hc85233221/codex-security-audit/tree/v3.1.0/mac-security-audit
 只安裝，先不要開始健檢；若同名 Skill 已存在，先確認版本及自行修改的內容，不要直接覆蓋。
 ```
 
-[開啟 v3.0.0 安裝來源](https://github.com/hc85233221/codex-security-audit/tree/v3.0.0/mac-security-audit) · [下載分享 ZIP](https://github.com/hc85233221/codex-security-audit/releases/download/v3.0.0/mac-security-audit-v3.0.0.zip)
+[開啟 v3.1.0 安裝來源](https://github.com/hc85233221/codex-security-audit/tree/v3.1.0/mac-security-audit) · [下載分享 ZIP](https://github.com/hc85233221/codex-security-audit/releases/download/v3.1.0/mac-security-audit-v3.1.0.zip)
 
 連結由 Codex 下載並安裝；只在瀏覽器點開連結不會自動安裝。安裝完成後，在下一則訊息輸入：
 
@@ -23,10 +23,28 @@ https://github.com/hc85233221/codex-security-audit/tree/v3.0.0/mac-security-audi
 
 需要具備本機操作能力的 Codex，以及 **Python 3.9 以上**。Windows 另使用內建 PowerShell 5.1；缺少工具時會先說明，不會自行安裝或提權。
 
+## 已安裝的人怎麼更新？
+
+**不會自動更新。** 每次安裝是本機副本，固定版本連結會保留原版本。
+
+請在 Codex 說：
+
+```text
+請從 https://github.com/hc85233221/codex-security-audit 檢查並更新我的 mac-security-audit Skill。
+先核對目前版本與本機修改，保留舊版備份；有自行修改的內容時先詢問，不要直接覆蓋。
+```
+
+v3.1.0 起也可以說「使用 $mac-security-audit 檢查是否有新版」。只查版本不替換檔案；明確要求更新後才準備、核對與安裝。沒有背景自動更新或監控。
+
+v3.0.0 使用者也可使用上面的完整指令，由 Codex 讀取 [更新流程](mac-security-audit/references/updating.md)，不需要先手動刪除舊版。
+
+Windows 可查詢公開新版；自動準備與本機檔案比對尚未支援，更新會改走官方安裝工具下載至新資料夾，保留原版後再處理。
+
 ## 能看見什麼
 
 - **優先處理事項**：備份、更新、加密、防火牆與登入設定，附來源、時間、改善方式。
 - **電腦與 AI**：程式、背景服務、開機項目、排程、腳本、AI Skills、Wi-Fi 與藍牙摘要。
+- **AI 設定與近期檔案**：查看限定設定、程式及工作流的風險線索，不執行內容。近期檔案不是 AI 來源證明；圖片、模型、壓縮檔及其他未讀內容另標示限制。
 - **瀏覽器線索**：Cookie 中繼資料與擴充套件；不讀 Cookie 值、密碼或瀏覽歷史。
 - **科技感報告**：深色介面、圖表、搜尋與篩選；專業名詞滑鼠移入／鍵盤聚焦／手機點按即可解釋。
 
@@ -53,6 +71,15 @@ https://github.com/hc85233221/codex-security-audit/tree/v3.0.0/mac-security-audi
 不要執行、刪除或上傳檔案。
 ```
 
+## 檢查近期 AI 檔案
+
+```text
+請使用 $mac-security-audit 檢查近 14 天下載與 AI 生成檔案的資安線索。
+先確認輸出資料夾；不執行、不上傳、不刪除檔案，不讀聊天、憑證或私人文件。
+```
+
+預設僅查看近期下載與明列 AI 設定；其他輸出資料夾由使用者指定。結果分開呈現設定、程式與工作流、只看中繼資料的檔案及未檢查內容，不把「未發現線索」當成安全保證。Windows 此新增模組採保守的中繼資料檢查。
+
 ## 隱私與限制
 
 - 受檢設定與檔案保持唯讀，只建立新的本機報告。
@@ -71,6 +98,8 @@ https://github.com/hc85233221/codex-security-audit/tree/v3.0.0/mac-security-audi
 - [完整中文使用說明](mac-security-audit/使用說明.txt)
 - [Skill 指令與範圍](mac-security-audit/SKILL.md)
 - [驗證範圍](mac-security-audit/references/validation.md)
+- [AI 檔案檢查範圍](mac-security-audit/references/ai-artifacts.md)
+- [版本更新流程](mac-security-audit/references/updating.md)
 - [Windows 平台差異](mac-security-audit/references/windows.md)
 - [指定目標檢查](mac-security-audit/references/targeted-checks.md)
 - [原始碼 SHA-256 清單](SHA256SUMS.txt)
