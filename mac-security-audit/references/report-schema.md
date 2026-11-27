@@ -5,18 +5,22 @@
 - `meta`：版本、系統、原觀察時間 `observed_at`、產出時間、示範旗標與範圍說明；補查另列 `supplemented_at`，不可覆蓋原觀察時間。
 - `checks`：每項有 category、status、severity、summary、impact、actions、evidence、limitations、terms。可有 `short_summary` 用於簡潔畫面，原 summary／證據仍保留；短摘要不得把未知寫成已檢查或與已有使用統計矛盾。個別補查帶 observed_at 或 supplemented_at。
 - status 的 pass 只表示該設定符合檢查條件；attention 是有證據的待改善設定；review 是尚需確認的線索；unknown / not_checked 是資訊缺口。嚴重度與判讀狀態分開，沒有安全總分。
-- `inventories`：skills、apps、scripts、background、devices、extensions。程式的 `last_opened_at`、`last_opened_status`、來源與觀察時間只表示最近開啟中繼資料。安裝、執行中、最近開啟與使用次數不可互換；補列名稱不能覆蓋已知版本。
+- `inventories`：skills、apps、scripts、background、devices、extensions、ai_artifacts。程式的 `last_opened_at`、`last_opened_status`、來源與觀察時間只表示最近開啟中繼資料。安裝、執行中、最近開啟與使用次數不可互換；補列名稱不能覆蓋已知版本。
 - `usage`：僅明確提供的聚合統計；來源、期間、單位與未驗證原始事件的限制在圖旁展示。缺資料不是零。
 - 使用次數未知時，主要卡片直接用 `inventories` 顯示技能來源分布與程式最近開啟日期；仍保留 `usage` 未知狀態。日期由新到舊呈現，排除無效值及晚於該來源觀察時間的日期，不當成次數或時數排行。程式最近開啟的來源觀察時間優先取 `raw_modules.recent_apps.observed_at`，再用補查或原觀察時間；不得以產出時間假裝重新收集。
 - `metrics`：成功讀取範圍的 Cookie 統計、Mac 有限秒數流量。Cookie 條件可重疊，不能用成互斥圓餅圖；流量不是外洩判定。
 - `scope` / `limitations`：模組執行狀態及受限範圍。
 - `access_requests`：需要使用者確認的範圍、最小資訊與替代方式。HTML 不會變更權限；助理在後續對話詢問。
-- `raw_modules` / `manifest`：完整的已去除機密內容的原始模組證據與程式雜湊；包含在本機 JSON 下載中。報告仍是私人資訊。
+- `raw_modules` / `manifest`：完整的已去除機密內容的原始模組證據與程式雜湊；`template_sha256` 是本次實際使用的 HTML 模板雜湊，補查時重新計算；包含在本機 JSON 下載中。報告仍是私人資訊。
 - `glossary`：提供詞語與說明的資料字典，供文字中的 tooltip 使用；不呈現獨立名詞章節或導覽項目。
 
 Mac 預設包含 `supplemental` 與 `recent_apps`。`manual_ui` 僅接受實際觀察的本機隱私權、登入項目、共享及鎖定設定；不自動讀取外部帳號。使用者選擇延後帳號檢查時，記錄範圍決定並保留 not_checked。
 
 Mac 的 `exposure` 提供管理、代理、訪客、自動登入與防火牆隱藏模式；每項 ID 必須以 `exposure.` 開頭，不可覆蓋其他檢查。Windows 不自動執行此模組。
+
+`ai_artifacts` 在兩個平台的預設檢查中執行，也可單獨補查。資料必須有觀察時間，檢查 ID 限 `ai_artifacts.*`、類別限 `skills`／`files`；不可覆蓋其他項目或回報 `pass`。清單限 `inventories.ai_artifacts`，新的補查以新範圍取代舊清單，不累加重複或過時項目。`--ai-root` 可重複指定已授權的近期檔案資料夾並取代 Downloads 預設，`--ai-exclude` 可限縮；報告必須建立在受檢資料夾之外。
+
+AI 檔案列出 `name`、`path`、`source`、`kind`、`group`（config／generated）、`scan_status`、`content_read`、`signal_count`、`provenance`，可帶 `modified_at`、`size_bytes`。介面分開統計文字檢查、中繼資料與未完成項目；未讀文字時，零筆線索顯示內容風險未知，不能當成通過；非零中繼資料線索仍可展示。`provenance = unknown` 是預設；修改時間、檔名與資料夾名稱不是 AI 生成證據。模型格式僅為類型提醒，不載入模型。詳見 [AI 設定與近期檔案](ai-artifacts.md)。
 
 `codex_usage` 是另行授權的使用來源補查，不是預設收集器。只可補充 `usage.skills` 的 unknown 發現、證據與限制，以及 `usage_review` 的來源、期間和卡片短說明。不能匯入裝置清單、變更其他健檢項目或覆蓋已有的 available 使用統計；詳見 [Codex 使用線索](codex-usage.md)。
 
