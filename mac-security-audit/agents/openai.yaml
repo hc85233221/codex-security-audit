@@ -1,0 +1,4 @@
+interface:
+  display_name: "電腦資安健檢 · Mac / Windows"
+  short_description: "唯讀健檢 Mac／Windows，並依指定檢查連結、網站與資料夾，提供易懂的離線圖形報告"
+  default_prompt: "請使用 $mac-security-audit，依我指定的電腦、連結、網站或資料夾範圍做唯讀檢查，產生附圖表與白話提示的本機報告。需要額外資料或權限時先告知；不改設定、不讀密碼、不自動刪除。"
